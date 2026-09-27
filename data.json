@@ -1,0 +1,26 @@
+[
+  {
+    "id": "sample-001",
+    "name": "Riya Sharma",
+    "roll": "23B120",
+    "course": "B.Sc Computer Science",
+    "status": "present",
+    "time": "2026-09-01 09:15:00"
+  },
+  {
+    "id": "sample-002",
+    "name": "Aman Verma",
+    "roll": "23B121",
+    "course": "B.Sc Computer Science",
+    "status": "absent",
+    "time": "2026-09-01 09:16:00"
+  },
+  {
+    "id": "sample-003",
+    "name": "Neha Gupta",
+    "roll": "22C045",
+    "course": "B.Com Honours",
+    "status": "present",
+    "time": "2026-09-01 09:20:00"
+  }
+]

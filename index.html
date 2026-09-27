@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGDAV Attendance Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="welcome">
+  <div class="welcome-card">
+    <div class="logo-big">P</div>
+    <h1>PGDAV College</h1>
+    <p>Smart Student Attendance Manager<br>Track attendance, search records, edit entries, view statistics and export professional reports.</p>
+    <button class="btn primary" onclick="openApp()">Open Attendance Manager</button>
+  </div>
+</div>
+<div id="app" class="hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-icon">P</div><div><h2>PGDAV College</h2><small>Attendance Manager</small></div></div>
+    <div class="nav-title">Navigation</div>
+    <button class="nav-btn active" onclick="showSection('dashboard',this)">▦ Dashboard</button>
+    <button class="nav-btn" onclick="showSection('records',this)">☷ Attendance Records</button>
+    <button class="nav-btn" onclick="focusAdd()">＋ Add Student</button>
+    <div class="nav-title">Tools</div>
+    <button class="nav-btn" onclick="exportExcel()">⇩ Export Excel</button>
+    <button class="nav-btn" onclick="exportPDF()">⇩ Export PDF</button>
+    <button class="nav-btn" onclick="window.print()">⎙ Print</button>
+    <button class="nav-btn" onclick="toggleTheme()">◐ Toggle Theme</button>
+    <div class="sidebar-note">Records are saved in your browser using localStorage. No server or account is required.</div>
+  </aside>
+  <main class="content">
+    <div class="topbar">
+      <div><h1 id="pageTitle">Attendance Dashboard</h1><div class="muted" id="todayText"></div></div>
+      <div class="top-actions"><button class="icon-btn" onclick="focusAdd()">＋ Add Student</button><button class="icon-btn" onclick="clearAll()">Clear All Data</button></div>
+    </div>
+    <section id="dashboard">
+      <div class="cards">
+        <div class="stat"><div class="stat-label">TOTAL RECORDS</div><div class="stat-value" id="totalStat">0</div><div class="stat-sub">Attendance entries</div></div>
+        <div class="stat"><div class="stat-label">PRESENT</div><div class="stat-value" id="presentStat">0</div><div class="stat-sub" id="presentSub">0%</div></div>
+        <div class="stat"><div class="stat-label">ABSENT</div><div class="stat-value" id="absentStat">0</div><div class="stat-sub" id="absentSub">0%</div></div>
+        <div class="stat"><div class="stat-label">ATTENDANCE RATE</div><div class="stat-value" id="rateStat">0%</div><div class="stat-sub">Present / total</div></div>
+      </div>
+      <div class="layout">
+        <div class="form-panel">
+          <div class="panel" id="addPanel"><h3>Add Student Attendance</h3><div class="form-grid">
+            <div><label>Student Name</label><input id="studentName" placeholder="e.g. Riya Sharma"></div>
+            <div><label>Roll Number</label><input id="rollNo" placeholder="e.g. 23B120"></div>
+            <div><label>Course</label><input id="course" placeholder="e.g. B.Sc Computer Science"></div>
+            <div><label>Status</label><select id="statusSelect"><option value="present">Present</option><option value="absent">Absent</option></select></div>
+            <div class="form-actions"><button class="btn primary" onclick="addAttendance()">Add Record</button><button class="btn secondary" onclick="addAttendance(true)">Add & Keep</button></div>
+          </div></div>
+          <div class="panel"><h3>Quick Statistics</h3><div id="courseStats"></div></div>
+        </div>
+        <div class="panel"><h3>Recent Attendance</h3><div id="recentRecords"></div></div>
+      </div>
+    </section>
+    <section id="records" class="hidden">
+      <div class="panel">
+        <div class="toolbar"><input class="search" id="globalSearch" placeholder="Search name, roll number or course..." oninput="render()"><select id="filterStatus" onchange="render()" style="width:150px"><option value="">All Status</option><option value="present">Present</option><option value="absent">Absent</option></select><button class="btn secondary" onclick="clearFilters()">Reset</button></div>
+        <div class="toolbar"><input id="filterName" placeholder="Filter name" oninput="render()"><input id="filterRoll" placeholder="Filter roll" oninput="render()"><input id="filterCourse" placeholder="Filter course" oninput="render()"><select id="pageSize" onchange="page=1;render()" style="width:110px"><option>10</option><option>25</option><option>50</option><option>100</option></select></div>
+        <div class="toolbar"><button class="btn primary" onclick="markSelected('present')">Mark Present</button><button class="btn secondary" onclick="markSelected('absent')">Mark Absent</button><button class="btn danger" onclick="removeSelected()">Delete Selected</button><button class="btn secondary" onclick="markAllVisiblePresent()">Mark Visible Present</button></div>
+        <div class="table-wrap"><table><thead><tr><th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>Name</th><th>Roll No.</th><th>Course</th><th>Status</th><th>Date & Time</th><th>Actions</th></tr></thead><tbody id="attendanceTableBody"></tbody></table></div>
+        <div class="pagination"><span id="pageInfo"></span><div class="page-btns"><button onclick="changePage(-1)">Previous</button><button onclick="changePage(1)">Next</button></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast hidden"></div>
+<div id="editModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Edit Attendance</h3><button class="icon-btn" onclick="closeEdit()">✕</button></div><div class="form-grid" style="margin-top:16px"><input type="hidden" id="editId"><div><label>Name</label><input id="editName"></div><div><label>Roll Number</label><input id="editRoll"></div><div><label>Course</label><input id="editCourse"></div><div><label>Status</label><select id="editStatus"><option value="present">Present</option><option value="absent">Absent</option></select></div><button class="btn primary" onclick="saveEdit()">Save Changes</button></div></div></div>
+<script src="script.js"></script>
+</body>
+</html>
